@@ -14,8 +14,7 @@ fn main() {
             SubCommand::with_name("semver")
                 .version(crate_version!())
                 .bin_name("cargo")
-                .author(env!("CARGO_PKG_AUTHORS"))
-                .about(env!("CARGO_PKG_DESCRIPTION"))
+                .about("Read or update the version in your Cargo.toml file")
                 .setting(AppSettings::ArgRequiredElseHelp)
                 .arg(
                     Arg::with_name("config")
