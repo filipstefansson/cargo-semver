@@ -1,6 +1,6 @@
 # cargo-semver
 
-[![crates.io](https://img.shields.io/crates/v/cargo-semver)](https://codecov.io/gh/filipstefansson/cargo-semver)
+[![crates.io](https://img.shields.io/crates/v/cargo-semver)](https://crates.io/crates/cargo-semver)
 [![codecov](https://codecov.io/gh/filipstefansson/cargo-semver/branch/master/graph/badge.svg?token=HSAldVxPvX)](https://codecov.io/gh/filipstefansson/cargo-semver)
 
 **cargo-semver** is a cargo subcommand to help you update the version in your `Cargo.toml` file.
