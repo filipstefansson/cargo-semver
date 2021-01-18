@@ -1,0 +1,62 @@
+name: publish
+
+on:
+  release:
+    types: [published, released, prerelease]
+
+jobs:
+  publish-binary:
+    name: publish-binary-${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            binary-suffix: .exe
+
+          - os: macos-latest
+            target: x86_64-apple-darwin
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: set version
+        id: version
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+
+      - name: install rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+          target: ${{ matrix.target }}
+
+      - name: build
+        run: cargo build --release --locked
+
+      - name: strip binary
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+        run: strip target/release/cargo-semver
+
+      - name: create release artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: cargo-semver-${{ matrix.target }}${{ matrix.binary-suffix }}
+          path: target/release/cargo-semver${{ matrix.binary-suffix }}
+          retention-days: 5
+
+      - name: upload binaries to release
+        uses: svenstaro/upload-release-action@v1-release
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/cargo-semver${{ matrix.binary-suffix }}
+          asset_name: cargo-semver-${{ steps.version.outputs.VERSION }}-${{ matrix.target }}${{ matrix.binary-suffix }}
+          tag: ${{ github.ref }}
