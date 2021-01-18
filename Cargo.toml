@@ -1,7 +1,7 @@
 [package]
 authors = ["Filip Stefansson <filip.stefansson@gmail.com>"]
 name = "cargo-semver"
-version = "1.0.0-alpha.2"
+version = "1.0.0-alpha.3"
 license = "MIT"
 description = "Cargo subcommand to update the version in your Cargo.toml file - SemVer style."
 readme = "README.md"

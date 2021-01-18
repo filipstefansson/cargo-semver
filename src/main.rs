@@ -1,55 +1,66 @@
 mod config;
 mod version;
 
-use clap::{crate_version, App, Arg, SubCommand};
+use clap::{crate_version, App, AppSettings, Arg, SubCommand};
 use std::env;
 use version::{Bump, Version};
 
 #[cfg(not(tarpaulin_include))]
 fn main() {
+    // create a sub command for cargo
     let matches = App::new("cargo-semver")
         .version(crate_version!())
-        .author(env!("CARGO_PKG_AUTHORS"))
-        .about(env!("CARGO_PKG_DESCRIPTION"))
-        .arg(
-            Arg::with_name("config")
-                .short("c")
-                .long("config")
-                .value_name("FILE")
-                .help("Use a custom config file")
-                .takes_value(true)
-                .global(true),
-        )
         .subcommand(
-            SubCommand::with_name("set")
-                .about("Set a specific version")
-                .usage("cargo-semver set [VERSION]")
+            SubCommand::with_name("semver")
+                .version(crate_version!())
+                .bin_name("cargo")
+                .author(env!("CARGO_PKG_AUTHORS"))
+                .about(env!("CARGO_PKG_DESCRIPTION"))
+                .setting(AppSettings::ArgRequiredElseHelp)
+                .setting(AppSettings::TrailingVarArg)
                 .arg(
-                    Arg::with_name("VERSION")
-                        .help("A semantic version")
-                        .required(true)
-                        .index(1),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("bump")
-                .about("Increments the version number")
-                .usage("cargo-semver bump [TYPE] [PRE-RELEASE]")
-                .arg(
-                    Arg::with_name("TYPE")
-                        .required(true)
-                        .index(1)
-                        .possible_values(&["major", "minor", "patch", "pre"])
-                        .help("Increment type"),
+                    Arg::with_name("config")
+                        .short("c")
+                        .long("config")
+                        .value_name("FILE")
+                        .help("Use a custom config file")
+                        .takes_value(true)
+                        .global(true),
                 )
-                .arg(
-                    Arg::with_name("PRE-RELEASE")
-                        .required(false)
-                        .index(2)
-                        .help("Add a pre-release version (optional)"),
+                .subcommand(
+                    SubCommand::with_name("set")
+                        .about("Set a specific version")
+                        .usage("cargo-semver set [VERSION]")
+                        .arg(
+                            Arg::with_name("VERSION")
+                                .help("A semantic version")
+                                .required(true)
+                                .index(1),
+                        ),
+                )
+                .subcommand(
+                    SubCommand::with_name("bump")
+                        .about("Increments the version number")
+                        .usage("cargo-semver bump [TYPE] [PRE-RELEASE]")
+                        .arg(
+                            Arg::with_name("TYPE")
+                                .required(true)
+                                .index(1)
+                                .possible_values(&["major", "minor", "patch", "pre"])
+                                .help("Increment type"),
+                        )
+                        .arg(
+                            Arg::with_name("PRE-RELEASE")
+                                .required(false)
+                                .index(2)
+                                .help("Add a pre-release version (optional)"),
+                        ),
                 ),
         )
         .get_matches();
+
+    // go down one sub command level from `cargo semver` to just `semver`
+    let matches = matches.subcommand_matches("semver").unwrap();
 
     // create a version from the config file
     let config_path = matches.value_of("config").unwrap_or("Cargo.toml");
