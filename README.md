@@ -9,7 +9,7 @@
 $ cargo semver
 1.0.0
 
-$ cargo semver patch
+$ cargo semver bump patch
 1.0.1
 ```
 
@@ -25,7 +25,7 @@ $ cargo install cargo-semver
 
 ```console
 $ cargo semver # gets the current version
-$ cargo semver major|minor|patch|pre # bumps the version
+$ cargo semver bump [TYPE] [PRE-RELEASE] # bumps the version
 $ cargo set [VERSION] # sets a specific version
 ```
 
@@ -34,23 +34,23 @@ $ cargo set [VERSION] # sets a specific version
 You can update the version in your `Cargo.toml` file using one of the subcommands:
 
 ```console
-$ cargo semver major
+$ cargo semver bump major
 2.0.0
 
-$ cargo semver minor
+$ cargo semver bump minor
 2.1.0
 
-$ cargo semver patch
+$ cargo semver bump patch
 2.1.1
 
-$ cargo semver pre alpha
+$ cargo semver bump pre alpha
 2.1.1-alpha.1
 ```
 
-If you want to bump the version and add a pre-release version in one command you can use the `pre` flag:
+If you want to bump the version and add a pre-release version:
 
 ```console
-$ cargo semver major --pre alpha
+$ cargo semver bump major alpha
 2.0.0-alpha.1
 ```
 
@@ -59,16 +59,16 @@ $ cargo semver major --pre alpha
 There are multiple ways of updating the pre-release version:
 
 ```console
-$ cargo semver major --pre alpha
+$ cargo semver bump major alpha
 2.0.0-alpha.1
 
-$ cargo semver pre alpha
+$ cargo semver bump pre alpha
 2.0.0-alpha.2
 
-$ cargo semver pre
+$ cargo semver bump pre
 2.0.0-alpha.3
 
-$ cargo semver pre beta
+$ cargo semver bump pre beta
 2.0.0-beta.1
 ```
 

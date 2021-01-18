@@ -1,10 +1,9 @@
 use crate::config::Config;
 use regex::Regex;
-use seahorse::Context;
 use semver::Identifier;
 use std::process;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Bump {
     Major,
     Minor,
@@ -27,12 +26,7 @@ pub struct Version {
 
 impl Version {
     /// Grabs the `version` from the config string.
-    pub fn new(c: &Context) -> Version {
-        let config_path = match c.string_flag("config") {
-            Ok(p) => p,
-            _ => "Cargo.toml".to_string(),
-        };
-
+    pub fn new(config_path: &str) -> Version {
         let config_content = Config::read_config(&config_path);
 
         let search = Regex::new(r#"version\s?=\s?"(.*?)""#).unwrap();
@@ -48,7 +42,7 @@ impl Version {
             match semver::Version::parse(&hit[1].to_string()) {
                 Ok(version) => {
                     return Version {
-                        config_path,
+                        config_path: config_path.to_string(),
                         config_content,
                         line,
                         version,
@@ -63,13 +57,18 @@ impl Version {
         panic!("failed to find version in Config.toml")
     }
 
-    pub fn set(&mut self, version: semver::Version) -> String {
-        self.version = version;
+    pub fn set(&mut self, version: &str) -> String {
+        // validate version
+        let new_version = match semver::Version::parse(version) {
+            Ok(v) => v,
+            Err(err) => panic!("{}", err),
+        };
 
+        self.version = new_version;
         self.update_config_version()
     }
 
-    pub fn bump(&mut self, bump: Bump, pre_flag: Option<String>) -> String {
+    pub fn bump(&mut self, bump: Bump, pre_flag: Option<&str>) -> String {
         match bump {
             Bump::Major => &self.version.increment_major(),
             Bump::Minor => &self.version.increment_minor(),
@@ -78,7 +77,10 @@ impl Version {
         };
 
         if let Some(pre_flag) = pre_flag {
-            self.version.pre = vec![Identifier::AlphaNumeric(pre_flag), Identifier::Numeric(1)];
+            self.version.pre = vec![
+                Identifier::AlphaNumeric(pre_flag.to_owned()),
+                Identifier::Numeric(1),
+            ];
         }
 
         self.update_config_version()
@@ -137,5 +139,80 @@ impl Version {
                 Identifier::Numeric(1),
             ];
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+    use tempfile::NamedTempFile;
+
+    fn create_version(file: &mut NamedTempFile, version: &str) -> Version {
+        writeln!(
+            file,
+            "[package]\nversion = \"{}\"\n\n[dependencies]\nversion = \"{}\"",
+            version, version,
+        )
+        .unwrap();
+        let config_path = file.path().to_str().unwrap().to_string();
+
+        Version::new(&config_path)
+    }
+
+    #[test]
+    fn test_create_version() {
+        let mut file = NamedTempFile::new().unwrap();
+        let version = create_version(&mut file, "1.0.0");
+
+        assert_eq!(version.version.to_string(), "1.0.0");
+        assert_eq!(version.line, "version = \"1.0.0\"");
+        assert_eq!(
+            version.config_path,
+            file.path().to_str().unwrap().to_string()
+        );
+    }
+
+    #[test]
+    fn test_set_version() {
+        let mut file = NamedTempFile::new().unwrap();
+        let mut version = create_version(&mut file, "1.0.0");
+
+        assert_eq!(version.version.to_string(), "1.0.0");
+
+        version.set("2.5.0");
+        assert_eq!(version.version.to_string(), "2.5.0");
+    }
+
+    #[test]
+    fn test_bump_version() {
+        let mut file = NamedTempFile::new().unwrap();
+        let mut version = create_version(&mut file, "1.0.0");
+
+        assert_eq!(version.version.to_string(), "1.0.0");
+
+        version.bump(Bump::Major, None);
+        assert_eq!(version.version.to_string(), "2.0.0");
+
+        version.bump(Bump::Minor, None);
+        assert_eq!(version.version.to_string(), "2.1.0");
+
+        version.bump(Bump::Patch, None);
+        assert_eq!(version.version.to_string(), "2.1.1");
+
+        version.bump(Bump::Pre("alpha".to_string()), None);
+        assert_eq!(version.version.to_string(), "2.1.1-alpha.1");
+
+        version.bump(Bump::Pre("alpha".to_string()), None);
+        assert_eq!(version.version.to_string(), "2.1.1-alpha.2");
+
+        version.bump(Bump::Pre("beta".to_string()), None);
+        assert_eq!(version.version.to_string(), "2.1.1-beta.1");
+
+        version.bump(Bump::Major, Some("beta"));
+        assert_eq!(version.version.to_string(), "3.0.0-beta.1");
+
+        version.bump(Bump::Major, None);
+        assert_eq!(version.version.to_string(), "4.0.0");
     }
 }

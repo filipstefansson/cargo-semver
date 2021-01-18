@@ -34,7 +34,7 @@ fn get() {
 #[test]
 fn patch() {
     let mut file = NamedTempFile::new().unwrap();
-    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["patch"]);
+    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["bump", "patch"]);
     cmd.assert().success().stdout("1.0.1\n");
 
     let contains = predicate::str::contains("1.0.1");
@@ -44,7 +44,7 @@ fn patch() {
 #[test]
 fn minor() {
     let mut file = NamedTempFile::new().unwrap();
-    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["minor"]);
+    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["bump", "minor"]);
     cmd.assert().success().stdout("1.1.0\n");
 
     let contains = predicate::str::contains("1.1.0");
@@ -54,7 +54,7 @@ fn minor() {
 #[test]
 fn major() {
     let mut file = NamedTempFile::new().unwrap();
-    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["major"]);
+    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["bump", "major"]);
     cmd.assert().success().stdout("2.0.0\n");
 
     let contains = predicate::str::contains("2.0.0");
@@ -64,7 +64,7 @@ fn major() {
 #[test]
 fn major_pre() {
     let mut file = NamedTempFile::new().unwrap();
-    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["major", "--pre", "alpha"]);
+    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["bump", "major", "alpha"]);
     cmd.assert().success().stdout("2.0.0-alpha.1\n");
 
     let contains = predicate::str::contains("2.0.0-alpha.1");
@@ -74,21 +74,21 @@ fn major_pre() {
 #[test]
 fn pre() {
     let mut file = NamedTempFile::new().unwrap();
-    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["pre", "alpha"]);
+    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["bump", "pre", "alpha"]);
     cmd.assert().success().stdout("1.0.0-alpha.1\n");
 
     let contains = predicate::str::contains("1.0.0-alpha.1");
     assert_eq!(true, contains.eval(&fs::read_to_string(path).unwrap()));
 
     // run again without `alpha`
-    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["pre"]);
+    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["bump", "pre"]);
     cmd.assert().success().stdout("1.0.0-alpha.2\n");
 
     let contains = predicate::str::contains("1.0.0-alpha.2");
     assert_eq!(true, contains.eval(&fs::read_to_string(path).unwrap()));
 
     // change to `beta`
-    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["pre", "beta"]);
+    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["bump", "pre", "beta"]);
     cmd.assert().success().stdout("1.0.0-beta.1\n");
 
     let contains = predicate::str::contains("1.0.0-beta.1");
@@ -98,7 +98,7 @@ fn pre() {
 #[test]
 fn keep_dependency_version() {
     let mut file = NamedTempFile::new().unwrap();
-    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["major"]);
+    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["bump", "major"]);
     cmd.assert().success().stdout("2.0.0\n");
 
     let contains = predicate::str::contains("version = \"2.0.0\"");
@@ -122,7 +122,7 @@ fn bad_input() {
 #[test]
 fn missing_pre_version() {
     let mut file = NamedTempFile::new().unwrap();
-    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["pre"]);
+    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["bump", "pre"]);
     cmd.assert().failure().stderr(predicate::str::contains(
         "run `cargo-semver pre [alpha|beta]` first to add a new pre-release version.",
     ));
