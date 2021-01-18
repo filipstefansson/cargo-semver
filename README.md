@@ -3,10 +3,10 @@
 [![crates.io](https://img.shields.io/crates/v/cargo-semver)](https://crates.io/crates/cargo-semver)
 [![codecov](https://codecov.io/gh/filipstefansson/cargo-semver/branch/master/graph/badge.svg?token=HSAldVxPvX)](https://codecov.io/gh/filipstefansson/cargo-semver)
 
-**cargo-semver** is a cargo subcommand to help you update the version in your `Cargo.toml` file.
+**cargo-semver** is a cargo subcommand to help you read and update the version in your `Cargo.toml` file.
 
 ```console
-$ cargo semver
+$ cargo semver get
 1.0.0
 
 $ cargo semver bump patch
@@ -24,9 +24,14 @@ $ cargo install cargo-semver
 ## Usage
 
 ```console
-$ cargo semver # gets the current version
-$ cargo semver bump [TYPE] [PRE-RELEASE] # bumps the version
-$ cargo set [VERSION] # sets a specific version
+# get the current version
+$ cargo semver get
+
+# bump the version with an optional pre-release
+$ cargo semver bump [TYPE] [PRE-RELEASE]
+
+# set a specific version
+$ cargo set [VERSION]
 ```
 
 ### Update version
