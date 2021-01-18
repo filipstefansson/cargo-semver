@@ -15,8 +15,10 @@ fn setup_command(file: &mut NamedTempFile, version: &str, command: Vec<&str>) ->
     let path = file.path().to_str().unwrap();
 
     let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    cmd.args(command);
+
+    cmd.args(vec!["semver"]);
     cmd.arg("--config").arg(path);
+    cmd.args(command);
 
     (cmd, path.to_string())
 }
@@ -24,7 +26,7 @@ fn setup_command(file: &mut NamedTempFile, version: &str, command: Vec<&str>) ->
 #[test]
 fn get() {
     let mut file = NamedTempFile::new().unwrap();
-    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec![]);
+    let (mut cmd, path) = setup_command(&mut file, "1.0.0", vec!["get"]);
     cmd.assert().success().stdout("1.0.0\n");
 
     let contains = predicate::str::contains("1.0.0");

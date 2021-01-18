@@ -17,7 +17,6 @@ fn main() {
                 .author(env!("CARGO_PKG_AUTHORS"))
                 .about(env!("CARGO_PKG_DESCRIPTION"))
                 .setting(AppSettings::ArgRequiredElseHelp)
-                .setting(AppSettings::TrailingVarArg)
                 .arg(
                     Arg::with_name("config")
                         .short("c")
@@ -37,6 +36,11 @@ fn main() {
                                 .required(true)
                                 .index(1),
                         ),
+                )
+                .subcommand(
+                    SubCommand::with_name("get")
+                        .about("Prints the current version")
+                        .usage("cargo-semver get"),
                 )
                 .subcommand(
                     SubCommand::with_name("bump")
@@ -65,6 +69,12 @@ fn main() {
     // create a version from the config file
     let config_path = matches.value_of("config").unwrap_or("Cargo.toml");
     let mut version = Version::new(config_path);
+
+    // $ cargo semver get
+    if matches.subcommand_matches("get").is_some() {
+        println!("{}", version.version);
+        return;
+    }
 
     // $ cargo semver set x.x.x
     if let Some(matches) = matches.subcommand_matches("set") {
@@ -101,7 +111,4 @@ fn main() {
 
         return;
     }
-
-    // no subcommand so just print the version
-    println!("{}", version.version);
 }
