@@ -39,6 +39,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: run
+          args: semver get
 
       - name: upload to codecov.io
         uses: codecov/codecov-action@v1.0.2
