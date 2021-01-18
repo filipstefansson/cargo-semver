@@ -12,6 +12,7 @@ pub enum Bump {
     Pre(String),
 }
 
+#[derive(Debug)]
 pub struct Version {
     /// the full version string in Config.toml to replace
     /// ie. `version = "1.0.0"`. We need this in the search
@@ -136,5 +137,91 @@ impl Version {
                 Identifier::Numeric(1),
             ];
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use seahorse::{Context, Flag, FlagType};
+    use std::io::Write;
+    use tempfile::NamedTempFile;
+
+    fn setup_test_context(file: &mut NamedTempFile, version: &str) -> Context {
+        writeln!(
+            file,
+            "[package]\nversion = \"{}\"\n\n[dependencies]\nversion = \"{}\"",
+            version, version,
+        )
+        .unwrap();
+        let config_path = file.path().to_str().unwrap().to_string();
+
+        let config_flag = Flag::new("config", FlagType::String);
+
+        Context::new(
+            vec!["--config".to_string(), config_path],
+            Some(vec![config_flag]),
+            "".to_string(),
+        )
+    }
+
+    #[test]
+    fn test_create_version() {
+        let mut file = NamedTempFile::new().unwrap();
+        let context = setup_test_context(&mut file, "1.0.0");
+
+        let version = Version::new(&context);
+
+        assert_eq!(version.version.to_string(), "1.0.0");
+        assert_eq!(version.line, "version = \"1.0.0\"");
+        assert_eq!(
+            version.config_path,
+            file.path().to_str().unwrap().to_string()
+        );
+    }
+
+    #[test]
+    fn test_set_version() {
+        let mut file = NamedTempFile::new().unwrap();
+        let context = setup_test_context(&mut file, "1.0.0");
+
+        let mut version = Version::new(&context);
+        assert_eq!(version.version.to_string(), "1.0.0");
+
+        version.set(semver::Version::parse("2.0.0").unwrap());
+        assert_eq!(version.version.to_string(), "2.0.0");
+    }
+
+    #[test]
+    fn test_bump_version() {
+        let mut file = NamedTempFile::new().unwrap();
+        let context = setup_test_context(&mut file, "1.0.0");
+
+        let mut version = Version::new(&context);
+        assert_eq!(version.version.to_string(), "1.0.0");
+
+        version.bump(Bump::Major, None);
+        assert_eq!(version.version.to_string(), "2.0.0");
+
+        version.bump(Bump::Minor, None);
+        assert_eq!(version.version.to_string(), "2.1.0");
+
+        version.bump(Bump::Patch, None);
+        assert_eq!(version.version.to_string(), "2.1.1");
+
+        version.bump(Bump::Pre("alpha".to_string()), None);
+        assert_eq!(version.version.to_string(), "2.1.1-alpha.1");
+
+        version.bump(Bump::Pre("alpha".to_string()), None);
+        assert_eq!(version.version.to_string(), "2.1.1-alpha.2");
+
+        version.bump(Bump::Pre("beta".to_string()), None);
+        assert_eq!(version.version.to_string(), "2.1.1-beta.1");
+
+        version.bump(Bump::Major, Some("beta".to_string()));
+        assert_eq!(version.version.to_string(), "3.0.0-beta.1");
+
+        version.bump(Bump::Major, None);
+        assert_eq!(version.version.to_string(), "4.0.0");
     }
 }
