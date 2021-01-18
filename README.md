@@ -18,7 +18,7 @@ $ cargo semver bump patch
 ## Installation
 
 ```console
-$ cargo install cargo-semver
+$ cargo install cargo-semver --vers 1.0.0-alpha.3
 ```
 
 ## Usage
